@@ -16,7 +16,9 @@ Matching shapes or numbers requires more complex AI models, we might consider a 
 ---
 ## $\color{rgba(255, 192, 203, 1)}{\textsf{Hardware Mechanism}}$
 
-These are the current scenarios that we're working on, arranged by Priority:
+>[!IMPORTANT]
+>These are the current scenarios that we're working on choosing one of which, arranged by Priority:
+
 ### 1. Flipping Cards
 
 <mark style="background: pink;"> check this video </mark>: https://youtube.com/shorts/c3VXFufrVV4?si=mrFHUmhxs6JlsQAE
