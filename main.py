@@ -110,10 +110,10 @@ while True:
     if corners is not None:
         # Draw corners on original frame
         for corner in corners:
-            cv2.circle(frame, (int(corner[0]), int(corner[1])), 5, (0, 255, 0), -1)
+            cv2.circle(frame, (int(corner[0]), int(corner[1])), 5, (0, 0, 0), -1)
         
         # Draw board outline
-        cv2.polylines(frame, [corners.astype(np.int32)], True, (0, 255, 0), 2)
+        cv2.polylines(frame, [corners.astype(np.int32)], True, (0, 0, 0), 2)
         
         # Transform board to get top-down view
         warped_board = transform_board(frame, corners)
@@ -140,7 +140,10 @@ while True:
             x = j * cell_width
             cv2.line(warped_board, (x, 0), (x, board_height), (255, 255, 255), 1)
         
-        # Check each cell for color
+        # Initialize color counts for each cell
+        color_counts = [[{} for _ in range(GRID_COLS)] for _ in range(GRID_ROWS)]
+        
+        # Check each cell for colors
         for color in colors:
             mask = np.zeros(warped_board.shape[:2], dtype=np.uint8)
             for l, u in zip(color['lower'], color['upper']):
@@ -157,13 +160,31 @@ while True:
                     x2 = (j + 1) * cell_width
                     y2 = (i + 1) * cell_height
                     
-                    # Check color in this cell
+                    # Count pixels of this color in the cell
                     cell_mask = mask[y1:y2, x1:x2]
-                    if cv2.countNonZero(cell_mask) > CELL_THRESHOLD:
-                        grid[i][j] = color['name']
-                        cv2.rectangle(warped_board, (x1, y1), (x2, y2), color['bgr'], 3)
+                    pixel_count = cv2.countNonZero(cell_mask)
+                    color_counts[i][j][color['name']] = pixel_count
+        
+        # Find dominant color for each cell
+        for i in range(GRID_ROWS):
+            for j in range(GRID_COLS):
+                if color_counts[i][j]:  # If any colors detected
+                    # Find color with maximum pixel count
+                    dominant_color = max(color_counts[i][j], key=color_counts[i][j].get)
+                    dominant_count = color_counts[i][j][dominant_color]
+                    
+                    if dominant_count > CELL_THRESHOLD:
+                        grid[i][j] = dominant_color
+                        # Get the BGR color for the dominant color
+                        color_bgr = next(c['bgr'] for c in colors if c['name'] == dominant_color)
+                        # Draw rectangle with the dominant color
+                        x1 = j * cell_width
+                        y1 = i * cell_height
+                        x2 = (j + 1) * cell_width
+                        y2 = (i + 1) * cell_height
+                        cv2.rectangle(warped_board, (x1, y1), (x2, y2), color_bgr, 3)
                         cv2.putText(warped_board, f"({i},{j})", (x1 + 10, y1 + 30), 
-                                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, color['bgr'], 2)
+                                   cv2.FONT_HERSHEY_SIMPLEX, 0.7, color_bgr, 2)
         
         print("\nCurrent Grid Detection:")
         for row in grid:

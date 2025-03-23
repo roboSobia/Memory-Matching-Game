@@ -2,8 +2,8 @@ import pygame
 import random
 
 # Constants
-SCREEN_WIDTH = 700
-SCREEN_HEIGHT = 700
+SCREEN_WIDTH = 650
+SCREEN_HEIGHT = 650
 CARD_SIZE = 150
 GRID_ROWS = 4
 GRID_COLS = 4
@@ -16,7 +16,7 @@ FLIP_DELAY = 1000  # Delay before hiding cards
 # Define the card colors
 colors = {
     "red": (255, 0, 0),
-    "orange": (255, 165, 0),
+    "orange": (255, 150, 0),
     "yellow": (255, 255, 0),
     "green": (0, 255, 0),
     "blue": (0, 0, 255),
