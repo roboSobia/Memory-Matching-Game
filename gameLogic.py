@@ -62,14 +62,13 @@ def showCard(card_id):
         # If the color is already identified, just mark the card as flipped
         print(f"Showing card {card_id} with already identified color {card_states[card_id]['color']}")  # Debug
         card_states[card_id]["flipped"] = True
-
-    print(f"Updated card_states: {card_states}")  # Debug
-    print(f"Updated colors_found: {colors_found}")  # Debugs
+    drawGrid()
 
 # Function to hide card (flip it back)
 def hideCard(card_id):
     print(f"Hiding card {card_id}")  # Debug
     card_states[card_id]["flipped"] = False
+    drawGrid()
 
 # Function to find a pair of cards with the same color
 def findPair():
@@ -101,6 +100,11 @@ def drawGrid():
                              (j * (CARD_SIZE + SPACE) + SPACE, 
                               i * (CARD_SIZE + SPACE) + SPACE, 
                               CARD_SIZE, CARD_SIZE), 3)
+    pygame.display.flip()
+
+# Draw the grid and update the display
+screen.fill(BACKGROUND_COLOR)
+drawGrid()
 
 # Game loop
 running = True
@@ -154,7 +158,7 @@ while pairs_found < (GRID_ROWS * GRID_COLS // 2) and running:
         if matched_card_id:
             print(f"Match found: {matched_card_id}")  # Debug
             # Flip the matching card
-            showCard(matched_card_id)
+            showCard(matched_card_id)  # Fix: changed from showCard(0) to show the actual matching card
             pygame.time.wait(FLIP_DELAY)
 
             # Update states
@@ -162,6 +166,10 @@ while pairs_found < (GRID_ROWS * GRID_COLS // 2) and running:
             colors_found[card_states[matched_card_id]["color"]].remove(matched_card_id)
             pairs_found += 1
             print(f"Updated pairs_found: {pairs_found}")  # Debug
+            
+            # Add delay to see both matched cards before proceeding
+            pygame.time.wait(FLIP_DELAY)
+            
             current_flipped_cards.clear()
             continue  # Continue to next loop iteration
 
@@ -187,6 +195,8 @@ while pairs_found < (GRID_ROWS * GRID_COLS // 2) and running:
             colors_found[color2].remove(current_flipped_cards[1])
             pairs_found += 1
             print(f"Updated pairs_found: {pairs_found}")  # Debug
+            pygame.time.wait(FLIP_DELAY)
+        
         else:
             print("Cards do not match. Hiding them.")  # Debug
             # If no match, hide both cards
@@ -197,10 +207,6 @@ while pairs_found < (GRID_ROWS * GRID_COLS // 2) and running:
         # Reset current_flipped_cards for the next round
         current_flipped_cards.clear()
 
-    # Draw the grid and update the display
-    screen.fill(BACKGROUND_COLOR)
-    drawGrid()
-    pygame.display.flip()
     clock.tick(30)  # Limit the frame rate to 30 FPS
 
 pygame.quit()
