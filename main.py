@@ -69,8 +69,8 @@ def sort_corners(corners):
     sorted_corners = np.zeros_like(corners)
     sorted_corners[0] = corners[np.argmin(sum_corners)]    # top-left
     sorted_corners[2] = corners[np.argmax(sum_corners)]    # bottom-right
-    sorted_corners[1] = corners[np.argmin(diff_corners)]   # top-right
-    sorted_corners[3] = corners[np.argmax(diff_corners)]   # bottom-left
+    sorted_corners[3] = corners[np.argmin(diff_corners)]   # top-right
+    sorted_corners[1] = corners[np.argmax(diff_corners)]   # bottom-left
     
     return sorted_corners
 
