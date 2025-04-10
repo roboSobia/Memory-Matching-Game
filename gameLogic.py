@@ -24,10 +24,10 @@ colors = {
 }
 
 # Grid drawn - replacing all "orange" with "violet"
-selected_colors = ["red", "yellow", "green", "green", 
-                   "aqua", "alaa", "red", "yellow", 
-                   "green", "blue", "aqua", "alaa",
-                   "red", "green", "blue", "red"]
+selected_colors = ["green", "red", "yellow", "blue", 
+                   "blue", "yellow", "red", "green", 
+                   "green", "red", "blue", "yellow",
+                   "yellow", "blue", "green", "red"]
 
 
 # Initialize card states: False for unvisited (not flipped), and None for unknown color
@@ -44,7 +44,7 @@ import numpy as np
 
 # DroidCam settings
 HTTP = 'http://'
-IP_ADDRESS = '192.168.2.19'  # Change to your IP
+IP_ADDRESS = '172.20.10.2'  # Change to your IP
 URL = HTTP + IP_ADDRESS + ':4747/mjpegfeed?640x480'
 
 colorRanges = [
@@ -270,8 +270,9 @@ def showCard(card_id):
     if card_states[card_id]["color"] is None:
         # If not, detect the color and update the card's state
         print(f"Showing card {card_id} with newly detected color {selected_colors[card_id]}")  # Debug
-        card_states[card_id] = {"flipped": True, "color": selected_colors[card_id]}
+        # card_states[card_id] = {"flipped": True, "color": selected_colors[card_id]}
         # Wait for a mouse click to continue
+        print(card_id)
         print("Press Enter to continue...")
         waiting_for_key = True
         while waiting_for_key:
@@ -282,16 +283,18 @@ def showCard(card_id):
                 if event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
                     waiting_for_key = False
                     break
-        drawGrid()
 
         # Add the card to the colors_found dictionary
         color = detectColor(card_id)
+        card_states[card_id] = {"flipped": True, "color": color}
         colors_found[color].append(card_id)
+        drawGrid()
     else:
         # If the color is already identified, just mark the card as flipped
         print(f"Showing card {card_id} with already identified color {card_states[card_id]['color']}")  # Debug  
         card_states[card_id]["flipped"] = True
         print("Press Enter to continue...")
+        print(card_id)
         waiting_for_key = True
         while waiting_for_key:
             for event in pygame.event.get():
@@ -307,7 +310,9 @@ def showCard(card_id):
 # Function to hide card (flip it back)
 def hideCard(card_id):
     print(f"Hiding card {card_id}")  # Debug
-    card_states[card_id]["flipped"] = False
+    # to avoid choosing same card again
+    # card_states[card_id]["flipped"] = False
+    print(card_id)
     print("Press Enter to continue...")
     waiting_for_key = True
     while waiting_for_key:
@@ -386,6 +391,7 @@ while pairs_found < (GRID_ROWS * GRID_COLS // 2) and running:
             # Flip both matching cards
             showCard(pair_ids[0])
             showCard(pair_ids[1])
+            
             pygame.time.wait(FLIP_DELAY)
 
             # Update states

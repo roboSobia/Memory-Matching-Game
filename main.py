@@ -3,15 +3,15 @@ import numpy as np
 
 # DroidCam settings
 HTTP = 'http://'
-IP_ADDRESS = '192.168.2.19'  # Change to your IP
+IP_ADDRESS = '172.20.10.2'  # Change to your IP
 URL = HTTP + IP_ADDRESS + ':4747/mjpegfeed?640x480'
 
 # Define colors with BGR values and HSV ranges
 colors = [
     {'name': 'red', 'bgr': (0, 0, 255), 'lower': [(0, 100, 100), (170, 100, 100)], 'upper': [(10, 255, 255), (179, 255, 255)]},
     {'name': 'orange', 'bgr': (0, 165, 255), 'lower': [(11, 100, 100)], 'upper': [(20, 255, 255)]},
-    {'name': 'yellow', 'bgr': (0, 255, 255), 'lower': [(25, 100, 100)], 'upper': [(35, 255, 255)]},
-    {'name': 'green', 'bgr': (0, 255, 0), 'lower': [(36, 100, 100)], 'upper': [(70, 255, 255)]},
+    {'name': 'yellow', 'bgr': (0, 255, 255), 'lower': [(25, 50, 50)], 'upper': [(35, 255, 255)]},
+    {'name': 'green', 'bgr': (0, 255, 0), 'lower': [(36, 50, 50)], 'upper': [(70, 255, 255)]},
     {'name': 'blue', 'bgr': (255, 0, 0), 'lower': [(100, 100, 100)], 'upper': [(140, 255, 255)]},
     {'name': 'violet', 'bgr': (238, 130, 238), 'lower': [(141, 100, 100)], 'upper': [(160, 255, 255)]}
 ]
