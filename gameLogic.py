@@ -1,5 +1,16 @@
 import pygame
 import random
+import serial
+import time
+import cv2
+import numpy as np
+
+# Arm Values
+arm_values =[[118, 44, 118], [48, 67, 108], [48,121,108], [120,147,129], [149,62,135], [127,90,122], [127,110,122], [175,130,165]]
+arm_home = [180, 90, 0]
+arm_temp1 = [180, 90, 0] # change later
+arm_temp2 = [180, 90, 0] # change later
+arm_trash = [180, 90, 0] # change later
 
 # Constants
 SCREEN_WIDTH = 650
@@ -18,7 +29,7 @@ colors = {
     "red": (255, 0, 0),
     "yellow": (255, 255, 0),
     "green": (0, 255, 0),
-    "blue": (0, 0, 255),
+    "blue": (0, 0, 255),    
     "aqua" :(0,255,255),
     "alaa" :(128,0,128)  
 }
@@ -39,9 +50,6 @@ pygame.init()
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 pygame.display.set_caption("Memory Puzzle Game")
 
-import cv2
-import numpy as np
-
 # DroidCam settings
 HTTP = 'http://'
 IP_ADDRESS = '172.20.10.2'  # Change to your IP
@@ -61,6 +69,107 @@ CELL_THRESHOLD = 500  # Minimum colored pixels to consider a cell filled
 # Fixed grid size
 GRID_ROWS = 4
 GRID_COLS = 4
+
+def setup_serial():
+    ser = serial.Serial()
+    ser.baudrate = 115200
+    ser.port = 'COM5' 
+    ser.timeout = 1
+    
+    try:
+        ser.open()
+        print("Serial port opened successfully!")
+        return ser
+    except Exception as e:
+        print(f"Error opening serial port: {e}")
+        return None
+
+
+ser = setup_serial()
+
+def send_arm_command(degree1, degree2, degree3, magnet, arm):
+    """
+    Send arm control parameters to the ESP32/ESP8266 through serial connection.
+    
+    Parameters:
+    - ser: Serial object (already opened)
+    - degree1: first servo angle (integer)
+    - degree2: second servo angle (integer)
+    - degree3: third servo angle (integer)
+    - magnet: magnet state (integer)
+    - arm: arm selection (integer)
+    
+    Returns:
+    - Response from the ESP (if any)
+    """
+    # Convert all parameters to strings and join with commas
+    command = f"{degree1},{degree2},{degree3},{magnet},{arm}\n"
+    
+    # Send the command as bytes
+    ser.write(command.encode())
+    
+    # Wait a moment for the ESP to process and respond
+    time.sleep(0.1)
+    
+    # Read the response (if any)
+    response = b''
+    while ser.in_waiting:
+        response += ser.read(1)
+    
+    return response.decode() if response else None
+
+
+
+def from_to(src, dest, id):
+    if src == "card" and dest == "temp1":
+        send_arm_command(arm_values[id % 8][0], arm_values[id % 8][1], arm_values[id % 8][2], 1, id <= 7) # pick card
+        send_arm_command(arm_home[0], arm_home[1], arm_home[2], 1, 0) # home
+        send_arm_command(arm_temp1[0], arm_temp1[1], arm_temp1[2], 1, 0) # put in temp1
+        time.sleep(1)
+        send_arm_command(arm_temp1[0], arm_temp1[1], arm_temp1[2], 0, 0) # put in temp1
+        send_arm_command(arm_home[0], arm_home[1], arm_home[2], 0, 0) # home
+    elif src == "card" and dest == "temp2":
+        send_arm_command(arm_values[id % 8][0], arm_values[id % 8][1], arm_values[id % 8][2], 1, id <= 7) # pick card
+        send_arm_command(arm_home[0],arm_home[1], arm_home[2], 1, 0) # home
+        send_arm_command(arm_temp2[0], arm_temp2[1], arm_temp2[2], 1, 0) # put in temp2
+        time.sleep(1)
+        send_arm_command(arm_temp2[0], arm_temp2[1], arm_temp2[2], 0, 0) # put in temp2
+        send_arm_command(arm_home[0], arm_home[1], arm_home[2], 0, 0) # home
+    elif src == "card" and dest == "trash":
+        send_arm_command(arm_values[id % 8][0], arm_values[id % 8][1], arm_values[id % 8][2], 1, id <= 7) # pick card
+        send_arm_command(arm_home[0], arm_home[1], arm_home[2], 1, 0) # home
+        send_arm_command(arm_trash[0], arm_trash[1], arm_trash[2], 1, 0) # put in trash
+        time.sleep(1)
+        send_arm_command(arm_trash[0], arm_trash[1], arm_trash[2], 0, 0) # put in trash
+        send_arm_command(arm_home[0], arm_home[1], arm_home[2], 0, 0) # home
+    elif src == "temp1" and dest == "trash":
+        send_arm_command(arm_temp1[0], arm_temp1[1], arm_temp1[2], 1, 0) # pick from temp1
+        send_arm_command(arm_home[0], arm_home[1], arm_home[2], 1, 0) # home
+        send_arm_command(arm_trash[0], arm_trash[1], arm_trash[2], 1, 0) # put in trash
+        time.sleep(1)
+        send_arm_command(arm_trash[0], arm_trash[1], arm_trash[2], 0, 0) # put in trash
+        send_arm_command(arm_home[0], arm_home[1], arm_home[2], 0, 0) # home
+    elif src == "temp2" and dest == "trash":
+        send_arm_command(arm_temp2[0], arm_temp2[1], arm_temp2[2], 1, 0) # pick from temp2
+        send_arm_command(arm_home[0], arm_home[1], arm_home[2], 1, 0) # home
+        send_arm_command(arm_trash[0], arm_trash[1], arm_trash[2], 1, 0) # put in trash
+        time.sleep(1)
+        send_arm_command(arm_trash[0], arm_trash[1], arm_trash[2], 0, 0) # put in trash
+        send_arm_command(arm_home[0], arm_home[1], arm_home[2], 0, 0) # home
+    elif src == "temp1" and dest == "card":
+        send_arm_command(arm_temp1[0], arm_temp1[1], arm_temp1[2], 1, 0) # pick from temp1
+        send_arm_command(arm_home[0], arm_home[1], arm_home[2], 1, 0) # home
+        send_arm_command(arm_values[id % 8][0], arm_values[id % 8][1], arm_values[id % 8][2], 1, id <= 7) # put in place
+        time.sleep(1)
+        send_arm_command(arm_values[id % 8][0], arm_values[id % 8][1], arm_values[id % 8][2], 0, id <= 7) # put in place
+        send_arm_command(serial, arm_home[0], arm_home[1], arm_home[2], 0, 0) # home
+    elif src == "temp2" and dest == "card":
+        send_arm_command(arm_temp2[0], arm_temp2[1], arm_temp2[2], 1, 0) # pick from temp2
+        send_arm_command(arm_home[0], arm_home[1], arm_home[2], 1, 0) # home
+        send_arm_command(arm_values[id % 8][0], arm_values[id % 8][1], arm_values[id % 8][2], 1, id <= 7) # put in place
+        time.sleep(1)
+        send_arm_command(arm_values[id % 8][0], arm_values[id % 8][1], arm_values[id % 8][2], 0, id <= 7) # put in place
+        send_arm_command(arm_home[0], arm_home[1], arm_home[2], 0, 0) # home
 
 def find_board_corners(frame):
     """Find the four corners of the game board in the image"""
@@ -392,6 +501,8 @@ while pairs_found < (GRID_ROWS * GRID_COLS // 2) and running:
             showCard(pair_ids[0])
             showCard(pair_ids[1])
             
+            from_to("card", "trash", pair_ids[0])
+            from_to("card", "trash", pair_ids[1])
             pygame.time.wait(FLIP_DELAY)
 
             # Update states
@@ -400,6 +511,7 @@ while pairs_found < (GRID_ROWS * GRID_COLS // 2) and running:
             pairs_found += 1
             print(f"Updated pairs_found: {pairs_found}")  # Debug
             pygame.time.wait(FLIP_DELAY)
+            # flip 
             continue  # Continue to next loop iteration
 
         # If no known pair, choose a random card and flip it
@@ -408,6 +520,7 @@ while pairs_found < (GRID_ROWS * GRID_COLS // 2) and running:
             print(f"Flipping random card: {card_id}")  # Debug
             showCard(card_id)
             current_flipped_cards.append(card_id)
+            from_to("card", "temp1", card_id)
             pygame.time.wait(FLIP_DELAY)
 
     # If one card is flipped
@@ -419,6 +532,7 @@ while pairs_found < (GRID_ROWS * GRID_COLS // 2) and running:
             print(f"Match found: {matched_card_id}")  # Debug
             # Flip the matching card
             showCard(matched_card_id)  # Fix: changed from showCard(0) to show the actual matching card
+            from_to("card", "trash", matched_card_id)
             pygame.time.wait(FLIP_DELAY)
 
             # Update states
@@ -439,6 +553,7 @@ while pairs_found < (GRID_ROWS * GRID_COLS // 2) and running:
             print(f"Flipping another random card: {card_id}")  # Debug
             showCard(card_id)
             current_flipped_cards.append(card_id)
+            from_to("card", "temp2", card_id)
             pygame.time.wait(FLIP_DELAY)
 
     # If two cards are flipped
@@ -455,6 +570,8 @@ while pairs_found < (GRID_ROWS * GRID_COLS // 2) and running:
             colors_found[color2].remove(current_flipped_cards[1])
             pairs_found += 1
             print(f"Updated pairs_found: {pairs_found}")  # Debug
+            from_to("temp1", "trash", current_flipped_cards[0])
+            from_to("temp2", "trash", current_flipped_cards[1])
             pygame.time.wait(FLIP_DELAY)
         
         else:
@@ -462,6 +579,8 @@ while pairs_found < (GRID_ROWS * GRID_COLS // 2) and running:
             # If no match, hide both cards
             hideCard(current_flipped_cards[0])
             hideCard(current_flipped_cards[1])
+            from_to("temp1", "card", current_flipped_cards[0])
+            from_to("temp2", "card", current_flipped_cards[1])
             pygame.time.wait(FLIP_DELAY)
 
         # Reset current_flipped_cards for the next round
