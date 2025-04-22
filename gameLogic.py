@@ -16,7 +16,7 @@ arm_trash = [180, 90, 0] # change later
 SCREEN_WIDTH = 650
 SCREEN_HEIGHT = 650
 CARD_SIZE = 150
-GRID_ROWS = 4
+GRID_ROWS = 2
 GRID_COLS = 4
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
@@ -52,7 +52,7 @@ pygame.display.set_caption("Memory Puzzle Game")
 
 # DroidCam settings
 HTTP = 'http://'
-IP_ADDRESS = '172.20.10.2'  # Change to your IP
+IP_ADDRESS = '192.168.205.212'  # Change to your IP
 URL = HTTP + IP_ADDRESS + ':4747/mjpegfeed?640x480'
 
 colorRanges = [
@@ -67,12 +67,12 @@ colorRanges = [
 CELL_THRESHOLD = 500  # Minimum colored pixels to consider a cell filled
 
 # Fixed grid size
-GRID_ROWS = 4
+GRID_ROWS = 2
 GRID_COLS = 4
 
 def setup_serial():
     ser = serial.Serial()
-    ser.baudrate = 115200
+    ser.baudrate = 9600
     ser.port = 'COM5' 
     ser.timeout = 1
     
@@ -87,7 +87,7 @@ def setup_serial():
 
 ser = setup_serial()
 
-def send_arm_command(degree1, degree2, degree3, magnet, arm):
+def send_arm_command(degree1, degree2, degree3, magnet):
     """
     Send arm control parameters to the ESP32/ESP8266 through serial connection.
     
@@ -122,54 +122,47 @@ def send_arm_command(degree1, degree2, degree3, magnet, arm):
 
 def from_to(src, dest, id):
     if src == "card" and dest == "temp1":
-        send_arm_command(arm_values[id % 8][0], arm_values[id % 8][1], arm_values[id % 8][2], 1, id <= 7) # pick card
-        send_arm_command(arm_home[0], arm_home[1], arm_home[2], 1, 0) # home
-        send_arm_command(arm_temp1[0], arm_temp1[1], arm_temp1[2], 1, 0) # put in temp1
-        time.sleep(1)
-        send_arm_command(arm_temp1[0], arm_temp1[1], arm_temp1[2], 0, 0) # put in temp1
-        send_arm_command(arm_home[0], arm_home[1], arm_home[2], 0, 0) # home
+        send_arm_command(arm_values[id % 8][0], arm_values[id % 8][1], arm_values[id % 8][2], 1) # pick card
+        send_arm_command(arm_home[0], arm_home[1], arm_home[2], 1) # home
+        send_arm_command(arm_temp1[0], arm_temp1[1], arm_temp1[2], 1) # put in temp1
+        send_arm_command(arm_temp1[0], arm_temp1[1], arm_temp1[2], 0) # put in temp1
+        send_arm_command(arm_home[0], arm_home[1], arm_home[2], 0) # home
     elif src == "card" and dest == "temp2":
-        send_arm_command(arm_values[id % 8][0], arm_values[id % 8][1], arm_values[id % 8][2], 1, id <= 7) # pick card
-        send_arm_command(arm_home[0],arm_home[1], arm_home[2], 1, 0) # home
-        send_arm_command(arm_temp2[0], arm_temp2[1], arm_temp2[2], 1, 0) # put in temp2
-        time.sleep(1)
-        send_arm_command(arm_temp2[0], arm_temp2[1], arm_temp2[2], 0, 0) # put in temp2
-        send_arm_command(arm_home[0], arm_home[1], arm_home[2], 0, 0) # home
+        send_arm_command(arm_values[id % 8][0], arm_values[id % 8][1], arm_values[id % 8][2], 1) # pick card
+        send_arm_command(arm_home[0],arm_home[1], arm_home[2], 1) # home
+        send_arm_command(arm_temp2[0], arm_temp2[1], arm_temp2[2], 1) # put in temp2
+        send_arm_command(arm_temp2[0], arm_temp2[1], arm_temp2[2], 0) # put in temp2
+        send_arm_command(arm_home[0], arm_home[1], arm_home[2], 0) # home
     elif src == "card" and dest == "trash":
-        send_arm_command(arm_values[id % 8][0], arm_values[id % 8][1], arm_values[id % 8][2], 1, id <= 7) # pick card
-        send_arm_command(arm_home[0], arm_home[1], arm_home[2], 1, 0) # home
-        send_arm_command(arm_trash[0], arm_trash[1], arm_trash[2], 1, 0) # put in trash
-        time.sleep(1)
-        send_arm_command(arm_trash[0], arm_trash[1], arm_trash[2], 0, 0) # put in trash
-        send_arm_command(arm_home[0], arm_home[1], arm_home[2], 0, 0) # home
+        send_arm_command(arm_values[id % 8][0], arm_values[id % 8][1], arm_values[id % 8][2], 1) # pick card
+        send_arm_command(arm_home[0], arm_home[1], arm_home[2], 1) # home
+        send_arm_command(arm_trash[0], arm_trash[1], arm_trash[2], 1) # put in trash
+        send_arm_command(arm_trash[0], arm_trash[1], arm_trash[2], 0) # put in trash
+        send_arm_command(arm_home[0], arm_home[1], arm_home[2], 0) # home
     elif src == "temp1" and dest == "trash":
-        send_arm_command(arm_temp1[0], arm_temp1[1], arm_temp1[2], 1, 0) # pick from temp1
-        send_arm_command(arm_home[0], arm_home[1], arm_home[2], 1, 0) # home
-        send_arm_command(arm_trash[0], arm_trash[1], arm_trash[2], 1, 0) # put in trash
-        time.sleep(1)
-        send_arm_command(arm_trash[0], arm_trash[1], arm_trash[2], 0, 0) # put in trash
-        send_arm_command(arm_home[0], arm_home[1], arm_home[2], 0, 0) # home
+        send_arm_command(arm_temp1[0], arm_temp1[1], arm_temp1[2], 1) # pick from temp1
+        send_arm_command(arm_home[0], arm_home[1], arm_home[2], 1) # home
+        send_arm_command(arm_trash[0], arm_trash[1], arm_trash[2], 1) # put in trash
+        send_arm_command(arm_trash[0], arm_trash[1], arm_trash[2], 0) # put in trash
+        send_arm_command(arm_home[0], arm_home[1], arm_home[2], 0) # home
     elif src == "temp2" and dest == "trash":
-        send_arm_command(arm_temp2[0], arm_temp2[1], arm_temp2[2], 1, 0) # pick from temp2
-        send_arm_command(arm_home[0], arm_home[1], arm_home[2], 1, 0) # home
-        send_arm_command(arm_trash[0], arm_trash[1], arm_trash[2], 1, 0) # put in trash
-        time.sleep(1)
-        send_arm_command(arm_trash[0], arm_trash[1], arm_trash[2], 0, 0) # put in trash
-        send_arm_command(arm_home[0], arm_home[1], arm_home[2], 0, 0) # home
+        send_arm_command(arm_temp2[0], arm_temp2[1], arm_temp2[2], 1) # pick from temp2
+        send_arm_command(arm_home[0], arm_home[1], arm_home[2], 1) # home
+        send_arm_command(arm_trash[0], arm_trash[1], arm_trash[2], 1) # put in trash
+        send_arm_command(arm_trash[0], arm_trash[1], arm_trash[2], 0) # put in trash
+        send_arm_command(arm_home[0], arm_home[1], arm_home[2], 0) # home
     elif src == "temp1" and dest == "card":
-        send_arm_command(arm_temp1[0], arm_temp1[1], arm_temp1[2], 1, 0) # pick from temp1
-        send_arm_command(arm_home[0], arm_home[1], arm_home[2], 1, 0) # home
-        send_arm_command(arm_values[id % 8][0], arm_values[id % 8][1], arm_values[id % 8][2], 1, id <= 7) # put in place
-        time.sleep(1)
-        send_arm_command(arm_values[id % 8][0], arm_values[id % 8][1], arm_values[id % 8][2], 0, id <= 7) # put in place
-        send_arm_command(serial, arm_home[0], arm_home[1], arm_home[2], 0, 0) # home
+        send_arm_command(arm_temp1[0], arm_temp1[1], arm_temp1[2], 1) # pick from temp1
+        send_arm_command(arm_home[0], arm_home[1], arm_home[2], 1) # home
+        send_arm_command(arm_values[id % 8][0], arm_values[id % 8][1], arm_values[id % 8][2], 1) # put in place
+        send_arm_command(arm_values[id % 8][0], arm_values[id % 8][1], arm_values[id % 8][2], 0) # put in place
+        send_arm_command(serial, arm_home[0], arm_home[1], arm_home[2], 0) # home
     elif src == "temp2" and dest == "card":
-        send_arm_command(arm_temp2[0], arm_temp2[1], arm_temp2[2], 1, 0) # pick from temp2
-        send_arm_command(arm_home[0], arm_home[1], arm_home[2], 1, 0) # home
-        send_arm_command(arm_values[id % 8][0], arm_values[id % 8][1], arm_values[id % 8][2], 1, id <= 7) # put in place
-        time.sleep(1)
-        send_arm_command(arm_values[id % 8][0], arm_values[id % 8][1], arm_values[id % 8][2], 0, id <= 7) # put in place
-        send_arm_command(arm_home[0], arm_home[1], arm_home[2], 0, 0) # home
+        send_arm_command(arm_temp2[0], arm_temp2[1], arm_temp2[2], 1) # pick from temp2
+        send_arm_command(arm_home[0], arm_home[1], arm_home[2], 1) # home
+        send_arm_command(arm_values[id % 8][0], arm_values[id % 8][1], arm_values[id % 8][2], 1) # put in place
+        send_arm_command(arm_values[id % 8][0], arm_values[id % 8][1], arm_values[id % 8][2], 0) # put in place
+        send_arm_command(arm_home[0], arm_home[1], arm_home[2], 0) # home
 
 def find_board_corners(frame):
     """Find the four corners of the game board in the image"""
@@ -227,19 +220,21 @@ def transform_board(frame, corners):
     """Apply perspective transform to get top-down view of board"""
     # Define the destination points for the transform
     # Create a square output image
-    board_size = 400  # Output size of the board
+    width = 400  # Output size of the board
+    height = 200
+    
     dst_points = np.array([
         [0, 0],
-        [board_size, 0],
-        [board_size, board_size],
-        [0, board_size]
+        [width, 0],
+        [width, height],
+        [0, height]
     ], dtype=np.float32)
     
     # Calculate perspective transform matrix
     M = cv2.getPerspectiveTransform(corners, dst_points)
     
     # Apply transform
-    warped = cv2.warpPerspective(frame, M, (board_size, board_size))
+    warped = cv2.warpPerspective(frame, M, (width, height))
     
     return warped
 
@@ -420,7 +415,7 @@ def showCard(card_id):
 def hideCard(card_id):
     print(f"Hiding card {card_id}")  # Debug
     # to avoid choosing same card again
-    # card_states[card_id]["flipped"] = False
+    card_states[card_id]["flipped"] = False
     print(card_id)
     print("Press Enter to continue...")
     waiting_for_key = True
@@ -569,7 +564,7 @@ while pairs_found < (GRID_ROWS * GRID_COLS // 2) and running:
             colors_found[color1].remove(current_flipped_cards[0])
             colors_found[color2].remove(current_flipped_cards[1])
             pairs_found += 1
-            print(f"Updated pairs_found: {pairs_found}")  # Debug
+            print(f"Updated pairs_found: {pairs_found}")  # Debugfrom_to
             from_to("temp1", "trash", current_flipped_cards[0])
             from_to("temp2", "trash", current_flipped_cards[1])
             pygame.time.wait(FLIP_DELAY)
