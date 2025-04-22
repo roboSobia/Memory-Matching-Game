@@ -8,9 +8,9 @@ import numpy as np
 # Arm Values
 arm_values =[[118, 44, 118], [48, 67, 108], [48,121,108], [120,147,129], [149,62,135], [127,90,122], [127,110,122], [175,130,165]]
 arm_home = [180, 90, 0]
-arm_temp1 = [180, 90, 0] # change later
-arm_temp2 = [180, 90, 0] # change later
-arm_trash = [180, 90, 0] # change later
+arm_temp1 = [48, 0, 108] # change later
+arm_temp2 = [48, 180, 108] # change later
+arm_trash = [118, 0, 118] # change later
 
 # Constants
 SCREEN_WIDTH = 650
@@ -52,7 +52,7 @@ pygame.display.set_caption("Memory Puzzle Game")
 
 # DroidCam settings
 HTTP = 'http://'
-IP_ADDRESS = '192.168.205.212'  # Change to your IP
+IP_ADDRESS = '172.20.10.2'  # Change to your IP
 URL = HTTP + IP_ADDRESS + ':4747/mjpegfeed?640x480'
 
 colorRanges = [
@@ -74,7 +74,7 @@ def setup_serial():
     ser = serial.Serial()
     ser.baudrate = 9600
     ser.port = 'COM5' 
-    ser.timeout = 1
+    ser.timeout = 2
     
     try:
         ser.open()
@@ -87,7 +87,7 @@ def setup_serial():
 
 ser = setup_serial()
 
-def send_arm_command(degree1, degree2, degree3, magnet):
+def send_arm_command(degree1, degree2, degree3, magnet, movement):
     """
     Send arm control parameters to the ESP32/ESP8266 through serial connection.
     
@@ -103,7 +103,7 @@ def send_arm_command(degree1, degree2, degree3, magnet):
     - Response from the ESP (if any)
     """
     # Convert all parameters to strings and join with commas
-    command = f"{degree1},{degree2},{degree3},{magnet},{arm}\n"
+    command = f"{degree1},{degree2},{degree3},{magnet},{movement}\n"
     
     # Send the command as bytes
     ser.write(command.encode())
@@ -122,66 +122,93 @@ def send_arm_command(degree1, degree2, degree3, magnet):
 
 def from_to(src, dest, id):
     if src == "card" and dest == "temp1":
-        send_arm_command(arm_values[id % 8][0], arm_values[id % 8][1], arm_values[id % 8][2], 1) # pick card
-        send_arm_command(arm_home[0], arm_home[1], arm_home[2], 1) # home
-        send_arm_command(arm_temp1[0], arm_temp1[1], arm_temp1[2], 1) # put in temp1
-        send_arm_command(arm_temp1[0], arm_temp1[1], arm_temp1[2], 0) # put in temp1
-        send_arm_command(arm_home[0], arm_home[1], arm_home[2], 0) # home
+        send_arm_command(arm_values[id % 8][0], arm_values[id % 8][1], arm_values[id % 8][2], 1, 0) # pick card
+        time.sleep(2)
+        send_arm_command(arm_home[0], arm_home[1], arm_home[2], 1, 1) # home
+        time.sleep(2)
+        send_arm_command(arm_temp1[0], arm_temp1[1], arm_temp1[2], 1, 0) # put in temp1
+        time.sleep(2) 
+        send_arm_command(arm_home[0], arm_home[1], arm_home[2], 0, 1) # home
+        time.sleep(2) 
     elif src == "card" and dest == "temp2":
-        send_arm_command(arm_values[id % 8][0], arm_values[id % 8][1], arm_values[id % 8][2], 1) # pick card
-        send_arm_command(arm_home[0],arm_home[1], arm_home[2], 1) # home
-        send_arm_command(arm_temp2[0], arm_temp2[1], arm_temp2[2], 1) # put in temp2
-        send_arm_command(arm_temp2[0], arm_temp2[1], arm_temp2[2], 0) # put in temp2
-        send_arm_command(arm_home[0], arm_home[1], arm_home[2], 0) # home
+        send_arm_command(arm_values[id % 8][0], arm_values[id % 8][1], arm_values[id % 8][2], 1, 0) # pick card
+        time.sleep(2)
+        send_arm_command(arm_home[0],arm_home[1], arm_home[2], 1, 1) # home
+        time.sleep(2)
+        send_arm_command(arm_temp2[0], arm_temp2[1], arm_temp2[2], 1, 0) # put in temp2
+        time.sleep(2)
+        send_arm_command(arm_home[0], arm_home[1], arm_home[2], 0, 1) # home
+        time.sleep(2)
     elif src == "card" and dest == "trash":
-        send_arm_command(arm_values[id % 8][0], arm_values[id % 8][1], arm_values[id % 8][2], 1) # pick card
-        send_arm_command(arm_home[0], arm_home[1], arm_home[2], 1) # home
-        send_arm_command(arm_trash[0], arm_trash[1], arm_trash[2], 1) # put in trash
-        send_arm_command(arm_trash[0], arm_trash[1], arm_trash[2], 0) # put in trash
-        send_arm_command(arm_home[0], arm_home[1], arm_home[2], 0) # home
+        send_arm_command(arm_values[id % 8][0], arm_values[id % 8][1], arm_values[id % 8][2], 1, 0) # pick card
+        time.sleep(2)
+        send_arm_command(arm_home[0], arm_home[1], arm_home[2], 1, 1) # home
+        time.sleep(2)
+        send_arm_command(arm_trash[0], arm_trash[1], arm_trash[2], 1, 0) # put in trash
+        time.sleep(2)
+        send_arm_command(arm_home[0], arm_home[1], arm_home[2], 0, 1) # home
+        time.sleep(2)
     elif src == "temp1" and dest == "trash":
-        send_arm_command(arm_temp1[0], arm_temp1[1], arm_temp1[2], 1) # pick from temp1
-        send_arm_command(arm_home[0], arm_home[1], arm_home[2], 1) # home
-        send_arm_command(arm_trash[0], arm_trash[1], arm_trash[2], 1) # put in trash
-        send_arm_command(arm_trash[0], arm_trash[1], arm_trash[2], 0) # put in trash
-        send_arm_command(arm_home[0], arm_home[1], arm_home[2], 0) # home
+        send_arm_command(arm_temp1[0], arm_temp1[1], arm_temp1[2], 1, 0) # pick from temp1
+        time.sleep(2)
+        send_arm_command(arm_home[0], arm_home[1], arm_home[2], 1, 1) # home
+        time.sleep(2)
+        send_arm_command(arm_trash[0], arm_trash[1], arm_trash[2], 1, 0) # put in trash
+        time.sleep(2)
+        send_arm_command(arm_home[0], arm_home[1], arm_home[2], 0, 1) # home
+        time.sleep(2)
     elif src == "temp2" and dest == "trash":
-        send_arm_command(arm_temp2[0], arm_temp2[1], arm_temp2[2], 1) # pick from temp2
-        send_arm_command(arm_home[0], arm_home[1], arm_home[2], 1) # home
-        send_arm_command(arm_trash[0], arm_trash[1], arm_trash[2], 1) # put in trash
-        send_arm_command(arm_trash[0], arm_trash[1], arm_trash[2], 0) # put in trash
-        send_arm_command(arm_home[0], arm_home[1], arm_home[2], 0) # home
+        send_arm_command(arm_temp2[0], arm_temp2[1], arm_temp2[2], 1, 0) # pick from temp2
+        time.sleep(2)
+        send_arm_command(arm_home[0], arm_home[1], arm_home[2], 1, 1) # home
+        time.sleep(2)
+        send_arm_command(arm_trash[0], arm_trash[1], arm_trash[2], 1, 0) # put in trash
+        time.sleep(2)
+        send_arm_command(arm_home[0], arm_home[1], arm_home[2], 0, 1) # home
+        time.sleep(2)
     elif src == "temp1" and dest == "card":
-        send_arm_command(arm_temp1[0], arm_temp1[1], arm_temp1[2], 1) # pick from temp1
-        send_arm_command(arm_home[0], arm_home[1], arm_home[2], 1) # home
-        send_arm_command(arm_values[id % 8][0], arm_values[id % 8][1], arm_values[id % 8][2], 1) # put in place
-        send_arm_command(arm_values[id % 8][0], arm_values[id % 8][1], arm_values[id % 8][2], 0) # put in place
-        send_arm_command(serial, arm_home[0], arm_home[1], arm_home[2], 0) # home
+        send_arm_command(arm_temp1[0], arm_temp1[1], arm_temp1[2], 1, 0) # pick from temp1
+        time.sleep(2)
+        send_arm_command(arm_home[0], arm_home[1], arm_home[2], 1, 1) # home
+        time.sleep(2)
+        send_arm_command(arm_values[id % 8][0], arm_values[id % 8][1], arm_values[id % 8][2], 1, 0) # put in place
+        time.sleep(2)
+        send_arm_command(arm_home[0], arm_home[1], arm_home[2], 0, 1) # home
+        time.sleep(2)
     elif src == "temp2" and dest == "card":
-        send_arm_command(arm_temp2[0], arm_temp2[1], arm_temp2[2], 1) # pick from temp2
-        send_arm_command(arm_home[0], arm_home[1], arm_home[2], 1) # home
-        send_arm_command(arm_values[id % 8][0], arm_values[id % 8][1], arm_values[id % 8][2], 1) # put in place
-        send_arm_command(arm_values[id % 8][0], arm_values[id % 8][1], arm_values[id % 8][2], 0) # put in place
-        send_arm_command(arm_home[0], arm_home[1], arm_home[2], 0) # home
+        send_arm_command(arm_temp2[0], arm_temp2[1], arm_temp2[2], 1, 0) # pick from temp2
+        time.sleep(2)
+        send_arm_command(arm_home[0], arm_home[1], arm_home[2], 1, 1) # home
+        time.sleep(2)
+        send_arm_command(arm_values[id % 8][0], arm_values[id % 8][1], arm_values[id % 8][2], 1, 0) # put in place
+        time.sleep(2)
+        send_arm_command(arm_home[0], arm_home[1], arm_home[2], 0, 1) # home
+        time.sleep(2)
 
 def find_board_corners(frame):
-    """Find the four corners of the game board in the image"""
-    # Convert to grayscale
-    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    """Find the four corners of the game board with a white frame in the image"""
+    # Convert to HSV for better color segmentation
+    hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
     
-    # Apply blur to reduce noise
-    blur = cv2.GaussianBlur(gray, (5, 5), 0)
+    # Define white color range in HSV
+    lower_white = np.array([0, 0, 200])
+    upper_white = np.array([180, 40, 255])
     
-    # Apply Canny edge detection
-    edges = cv2.Canny(blur, 50, 150)
+    # Threshold the HSV image to get only white colors
+    mask = cv2.inRange(hsv, lower_white, upper_white)
     
-    # Find contours
-    contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    # Optional: Morphological operations to clean up the mask
+    kernel = np.ones((5, 5), np.uint8)
+    mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
+    mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
     
-    # Find the largest contour by area
+    # Find contours in the mask
+    contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    
     if not contours:
         return None
     
+    # Find the largest contour by area
     largest_contour = max(contours, key=cv2.contourArea)
     
     # Check if contour is large enough to be the board
@@ -194,12 +221,10 @@ def find_board_corners(frame):
     
     # If the polygon has 4 vertices, we assume it's the board
     if len(approx) == 4:
-        # Sort corners for perspective transform
         corners = np.array([point[0] for point in approx], dtype=np.float32)
         return sort_corners(corners)
     
     return None
-
 def sort_corners(corners):
     """Sort corners in order: top-left, top-right, bottom-right, bottom-left"""
     # Calculate sum and difference of x,y coordinates
@@ -493,11 +518,10 @@ while pairs_found < (GRID_ROWS * GRID_COLS // 2) and running:
         if pair_ids:
             print(f"Pair found: {pair_ids}")  # Debug
             # Flip both matching cards
-            showCard(pair_ids[0])
-            showCard(pair_ids[1])
-            
             from_to("card", "trash", pair_ids[0])
+            showCard(pair_ids[0])
             from_to("card", "trash", pair_ids[1])
+            showCard(pair_ids[1])
             pygame.time.wait(FLIP_DELAY)
 
             # Update states
@@ -513,9 +537,9 @@ while pairs_found < (GRID_ROWS * GRID_COLS // 2) and running:
         card_id = chooseRandomCard()
         if card_id is not None:
             print(f"Flipping random card: {card_id}")  # Debug
-            showCard(card_id)
-            current_flipped_cards.append(card_id)
             from_to("card", "temp1", card_id)
+            current_flipped_cards.append(card_id)
+            showCard(card_id)
             pygame.time.wait(FLIP_DELAY)
 
     # If one card is flipped
@@ -526,8 +550,8 @@ while pairs_found < (GRID_ROWS * GRID_COLS // 2) and running:
         if matched_card_id:
             print(f"Match found: {matched_card_id}")  # Debug
             # Flip the matching card
-            showCard(matched_card_id)  # Fix: changed from showCard(0) to show the actual matching card
             from_to("card", "trash", matched_card_id)
+            showCard(matched_card_id)  # Fix: changed from showCard(0) to show the actual matching card
             pygame.time.wait(FLIP_DELAY)
 
             # Update states
@@ -546,9 +570,9 @@ while pairs_found < (GRID_ROWS * GRID_COLS // 2) and running:
         card_id = chooseRandomCard()
         if card_id is not None:
             print(f"Flipping another random card: {card_id}")  # Debug
+            from_to("card", "temp2", card_id)
             showCard(card_id)
             current_flipped_cards.append(card_id)
-            from_to("card", "temp2", card_id)
             pygame.time.wait(FLIP_DELAY)
 
     # If two cards are flipped
@@ -572,10 +596,10 @@ while pairs_found < (GRID_ROWS * GRID_COLS // 2) and running:
         else:
             print("Cards do not match. Hiding them.")  # Debug
             # If no match, hide both cards
-            hideCard(current_flipped_cards[0])
-            hideCard(current_flipped_cards[1])
             from_to("temp1", "card", current_flipped_cards[0])
+            hideCard(current_flipped_cards[0])
             from_to("temp2", "card", current_flipped_cards[1])
+            hideCard(current_flipped_cards[1])
             pygame.time.wait(FLIP_DELAY)
 
         # Reset current_flipped_cards for the next round
