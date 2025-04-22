@@ -6,11 +6,11 @@ import cv2
 import numpy as np
 
 # Arm Values
-arm_values =[[118, 44, 118], [48, 67, 108], [48,121,108], [120,147,129], [149,62,135], [127,90,122], [127,110,122], [175,130,165]]
+arm_values =[[110, 40, 125], [90, 65, 120], [90,110,120], [110,140,125], [150,55,155], [130,80,140], [130,105,140], [150,125,155]]
 arm_home = [180, 90, 0]
-arm_temp1 = [48, 0, 108] # change later
-arm_temp2 = [48, 180, 108] # change later
-arm_trash = [118, 0, 118] # change later
+arm_temp1 = [90, 0, 120] # change later
+arm_temp2 = [90, 180, 120] # change later
+arm_trash = [140, 0, 140] # change later
 
 # Constants
 SCREEN_WIDTH = 650
@@ -29,9 +29,7 @@ colors = {
     "red": (255, 0, 0),
     "yellow": (255, 255, 0),
     "green": (0, 255, 0),
-    "blue": (0, 0, 255),    
-    "aqua" :(0,255,255),
-    "alaa" :(128,0,128)  
+    "blue": (0, 0, 255)
 }
 
 # Grid drawn - replacing all "orange" with "violet"
@@ -40,7 +38,7 @@ selected_colors = ["green", "red", "yellow", "blue",
                    "green", "red", "blue", "yellow",
                    "yellow", "blue", "green", "red"]
 
-
+ 
 # Initialize card states: False for unvisited (not flipped), and None for unknown color
 card_states = {i: {"flipped": False, "color": None} for i in range(GRID_ROWS * GRID_COLS)}
 colors_found = {color: [] for color in colors.keys()}  # Initialize an empty list for each color
@@ -52,18 +50,16 @@ pygame.display.set_caption("Memory Puzzle Game")
 
 # DroidCam settings
 HTTP = 'http://'
-IP_ADDRESS = '172.20.10.2'  # Change to your IP
+IP_ADDRESS = '192.168.205.212'  # Change to your IP
 URL = HTTP + IP_ADDRESS + ':4747/mjpegfeed?640x480'
 
 colorRanges = [
     {'name': 'red', 'bgr': (0, 0, 255), 'lower': [(0, 100, 100), (170, 100, 100)], 'upper': [(10, 255, 255), (179, 255, 255)]},
-    {'name': 'yellow', 'bgr': (0, 255, 255), 'lower': [(25, 100, 100)], 'upper': [(35, 255, 255)]},
-    {'name': 'green', 'bgr': (0, 255, 0), 'lower': [(36, 100, 100)], 'upper': [(70, 255, 255)]},
-    {'name': 'blue', 'bgr': (255, 0, 0), 'lower': [(100, 100, 100)], 'upper': [(140, 255, 255)]},
-    {'name': 'aqua', 'bgr': (255, 255, 0), 'lower': [(85, 100, 100)], 'upper': [(95, 255, 255)]},
-    {'name': 'alaa', 'bgr': (128, 0, 128), 'lower': [(145, 100, 100)], 'upper': [(165, 255, 255)]}
+    {'name': 'yellow', 'bgr': (0, 255, 255), 'lower': [(20, 100, 100)], 'upper': [(35, 255, 255)]},
+    {'name': 'green', 'bgr': (0, 255, 0), 'lower': [(40, 40, 40)], 'upper': [(80, 255, 255)]},
+    {'name': 'blue', 'bgr': (255, 0, 0), 'lower': [(100, 100, 100)], 'upper': [(130, 255, 255)]},
+    {'name': 'black', 'bgr': (0, 0, 0), 'lower': [(0, 0, 0)], 'upper': [(180, 255, 50)]}  # Black detection
 ]
-
 CELL_THRESHOLD = 500  # Minimum colored pixels to consider a cell filled
 
 # Fixed grid size
@@ -122,32 +118,50 @@ def send_arm_command(degree1, degree2, degree3, magnet, movement):
 
 def from_to(src, dest, id):
     if src == "card" and dest == "temp1":
-        send_arm_command(arm_values[id % 8][0], arm_values[id % 8][1], arm_values[id % 8][2], 1, 0) # pick card
+        send_arm_command(arm_values[id][0], arm_values[id][1], arm_values[id][2], 1, 0) # pick card
         time.sleep(2)
         send_arm_command(arm_home[0], arm_home[1], arm_home[2], 1, 1) # home
         time.sleep(2)
         send_arm_command(arm_temp1[0], arm_temp1[1], arm_temp1[2], 1, 0) # put in temp1
         time.sleep(2) 
         send_arm_command(arm_home[0], arm_home[1], arm_home[2], 0, 1) # home
-        time.sleep(2) 
+        # Wait for "done" message from serial port
+        response = ""
+        while "done" not in response.lower():
+            if ser.in_waiting:
+                byte = ser.read(1)
+                response += byte.decode(errors='replace')
+        print("serial responded", response)
     elif src == "card" and dest == "temp2":
-        send_arm_command(arm_values[id % 8][0], arm_values[id % 8][1], arm_values[id % 8][2], 1, 0) # pick card
+        send_arm_command(arm_values[id][0], arm_values[id][1], arm_values[id][2], 1, 0) # pick card
         time.sleep(2)
         send_arm_command(arm_home[0],arm_home[1], arm_home[2], 1, 1) # home
         time.sleep(2)
         send_arm_command(arm_temp2[0], arm_temp2[1], arm_temp2[2], 1, 0) # put in temp2
         time.sleep(2)
         send_arm_command(arm_home[0], arm_home[1], arm_home[2], 0, 1) # home
-        time.sleep(2)
+        # Wait for "done" message from serial port
+        response = ""
+        while "done" not in response.lower():
+            if ser.in_waiting:
+                byte = ser.read(1)
+                response += byte.decode(errors='replace')
+        print("serial responded", response)
     elif src == "card" and dest == "trash":
-        send_arm_command(arm_values[id % 8][0], arm_values[id % 8][1], arm_values[id % 8][2], 1, 0) # pick card
+        send_arm_command(arm_values[id][0], arm_values[id][1], arm_values[id][2], 1, 0) # pick card
         time.sleep(2)
         send_arm_command(arm_home[0], arm_home[1], arm_home[2], 1, 1) # home
         time.sleep(2)
         send_arm_command(arm_trash[0], arm_trash[1], arm_trash[2], 1, 0) # put in trash
         time.sleep(2)
         send_arm_command(arm_home[0], arm_home[1], arm_home[2], 0, 1) # home
-        time.sleep(2)
+        # Wait for "done" message from serial port
+        response = ""
+        while "done" not in response.lower():
+            if ser.in_waiting:
+                byte = ser.read(1)
+                response += byte.decode(errors='replace')
+        print("serial responded", response)
     elif src == "temp1" and dest == "trash":
         send_arm_command(arm_temp1[0], arm_temp1[1], arm_temp1[2], 1, 0) # pick from temp1
         time.sleep(2)
@@ -156,7 +170,13 @@ def from_to(src, dest, id):
         send_arm_command(arm_trash[0], arm_trash[1], arm_trash[2], 1, 0) # put in trash
         time.sleep(2)
         send_arm_command(arm_home[0], arm_home[1], arm_home[2], 0, 1) # home
-        time.sleep(2)
+        # Wait for "done" message from serial port
+        response = ""
+        while "done" not in response.lower():
+            if ser.in_waiting:
+                byte = ser.read(1)
+                response += byte.decode(errors='replace')
+        print("serial responded", response)
     elif src == "temp2" and dest == "trash":
         send_arm_command(arm_temp2[0], arm_temp2[1], arm_temp2[2], 1, 0) # pick from temp2
         time.sleep(2)
@@ -165,25 +185,43 @@ def from_to(src, dest, id):
         send_arm_command(arm_trash[0], arm_trash[1], arm_trash[2], 1, 0) # put in trash
         time.sleep(2)
         send_arm_command(arm_home[0], arm_home[1], arm_home[2], 0, 1) # home
-        time.sleep(2)
+        # Wait for "done" message from serial port
+        response = ""
+        while "done" not in response.lower():
+            if ser.in_waiting:
+                byte = ser.read(1)
+                response += byte.decode(errors='replace')
+        print("serial responded", response)
     elif src == "temp1" and dest == "card":
         send_arm_command(arm_temp1[0], arm_temp1[1], arm_temp1[2], 1, 0) # pick from temp1
         time.sleep(2)
         send_arm_command(arm_home[0], arm_home[1], arm_home[2], 1, 1) # home
         time.sleep(2)
-        send_arm_command(arm_values[id % 8][0], arm_values[id % 8][1], arm_values[id % 8][2], 1, 0) # put in place
+        send_arm_command(arm_values[id][0], arm_values[id][1], arm_values[id][2], 1, 0) # put in place
         time.sleep(2)
         send_arm_command(arm_home[0], arm_home[1], arm_home[2], 0, 1) # home
-        time.sleep(2)
+        # Wait for "done" message from serial port
+        response = ""
+        while "done" not in response.lower():
+            if ser.in_waiting:
+                byte = ser.read(1)
+                response += byte.decode(errors='replace')
+        print("serial responded", response)
     elif src == "temp2" and dest == "card":
         send_arm_command(arm_temp2[0], arm_temp2[1], arm_temp2[2], 1, 0) # pick from temp2
         time.sleep(2)
         send_arm_command(arm_home[0], arm_home[1], arm_home[2], 1, 1) # home
         time.sleep(2)
-        send_arm_command(arm_values[id % 8][0], arm_values[id % 8][1], arm_values[id % 8][2], 1, 0) # put in place
+        send_arm_command(arm_values[id][0], arm_values[id][1], arm_values[id][2], 1, 0) # put in place
         time.sleep(2)
         send_arm_command(arm_home[0], arm_home[1], arm_home[2], 0, 1) # home
-        time.sleep(2)
+        # Wait for "done" message from serial port
+        response = ""
+        while "done" not in response.lower():
+            if ser.in_waiting:
+                byte = ser.read(1)
+                response += byte.decode(errors='replace')
+        print("serial responded", response)
 
 def find_board_corners(frame):
     """Find the four corners of the game board with a white frame in the image"""
@@ -343,7 +381,11 @@ def detectColor(card_id):
                         dominant_count = color_counts[i][j][dominant_color]
                         
                         if dominant_count > CELL_THRESHOLD:
-                            grid[i][j] = dominant_color
+                            if dominant_color == "black":
+                                print(f"Cell ({i},{j}) is mostly black, treating as not flipped.")
+                                grid[i][j] = None  # Or skip updating card state
+                            else:
+                                grid[i][j] = dominant_color
                             # Get the BGR color for the dominant color
                             color_bgr = next(c['bgr'] for c in colorRanges if c['name'] == dominant_color)
                             # Draw rectangle with the dominant color
@@ -401,17 +443,17 @@ def showCard(card_id):
         print(f"Showing card {card_id} with newly detected color {selected_colors[card_id]}")  # Debug
         # card_states[card_id] = {"flipped": True, "color": selected_colors[card_id]}
         # Wait for a mouse click to continue
-        print(card_id)
-        print("Press Enter to continue...")
-        waiting_for_key = True
-        while waiting_for_key:
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    pygame.quit()
-                    exit()
-                if event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
-                    waiting_for_key = False
-                    break
+        # print(card_id)
+        # print("Press Enter to continue...")
+        # waiting_for_key = True
+        # while waiting_for_key:
+        #     for event in pygame.event.get():
+        #         if event.type == pygame.QUIT:
+        #             pygame.quit()
+        #             exit()
+        #         if event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
+        #             waiting_for_key = False
+        #             break
 
         # Add the card to the colors_found dictionary
         color = detectColor(card_id)
@@ -422,17 +464,17 @@ def showCard(card_id):
         # If the color is already identified, just mark the card as flipped
         print(f"Showing card {card_id} with already identified color {card_states[card_id]['color']}")  # Debug  
         card_states[card_id]["flipped"] = True
-        print("Press Enter to continue...")
-        print(card_id)
-        waiting_for_key = True
-        while waiting_for_key:
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    pygame.quit()
-                    exit()
-                if event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
-                    waiting_for_key = False
-                    break
+        # print("Press Enter to continue...")
+        # print(card_id)
+        # waiting_for_key = True
+        # while waiting_for_key:
+        #     for event in pygame.event.get():
+        #         if event.type == pygame.QUIT:
+        #             pygame.quit()
+        #             exit()
+        #         if event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
+        #             waiting_for_key = False
+        #             break
         drawGrid()
 
 
@@ -441,17 +483,17 @@ def hideCard(card_id):
     print(f"Hiding card {card_id}")  # Debug
     # to avoid choosing same card again
     card_states[card_id]["flipped"] = False
-    print(card_id)
-    print("Press Enter to continue...")
-    waiting_for_key = True
-    while waiting_for_key:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                exit()
-            if event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
-                waiting_for_key = False
-                break
+    # print(card_id)
+    # print("Press Enter to continue...")
+    # waiting_for_key = True
+    # while waiting_for_key:
+    #     for event in pygame.event.get():
+    #         if event.type == pygame.QUIT:
+    #             pygame.quit()
+    #             exit()
+    #         if event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
+    #             waiting_for_key = False
+    #             break
     drawGrid()
 
 # Function to find a pair of cards with the same color
@@ -499,6 +541,8 @@ running = True
 pairs_found = 0
 current_flipped_cards = []
 clock = pygame.time.Clock()
+send_arm_command(arm_home[0], arm_home[1], arm_home[2], 0, 1) # home
+
 
 while pairs_found < (GRID_ROWS * GRID_COLS // 2) and running:
     for event in pygame.event.get():
@@ -550,6 +594,7 @@ while pairs_found < (GRID_ROWS * GRID_COLS // 2) and running:
         if matched_card_id:
             print(f"Match found: {matched_card_id}")  # Debug
             # Flip the matching card
+            from_to("temp1", "trash", current_flipped_cards[0])
             from_to("card", "trash", matched_card_id)
             showCard(matched_card_id)  # Fix: changed from showCard(0) to show the actual matching card
             pygame.time.wait(FLIP_DELAY)

@@ -1,8 +1,17 @@
 #include <ESP32Servo.h>
-
 // Define the pin for the magnet control
 #define MAGNET_PIN 25 // Use GPIO 25 for the magnet
-
+/*
+180
+118, 44, 118, 0
+48, 67, 108
+48, 121, 108
+120, 138, 124
+149, 62, 135
+127, 90, 122
+127, 109, 127
+175, 130, 165
+*/
 // Declare three servo objects
 Servo servo1;
 Servo servo2;
@@ -156,8 +165,9 @@ void loop() {
         smoothMoveSync(servo1, currentAngle1, targetAngle1,
                        servo2, currentAngle2, targetAngle2,
                        servo3, currentAngle3, targetAngle3,
-                       10, flg); // Delay between steps (lower = faster, but might strain servos/power)
+                       10, pickSig); // Delay between steps (lower = faster, but might strain servos/power)
         flg--;
+        Serial.write("done");
         // --- Control the Magnet ---
         // --------------------------
 
