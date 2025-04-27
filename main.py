@@ -3,23 +3,21 @@ import numpy as np
 
 # DroidCam settings
 HTTP = 'http://'
-IP_ADDRESS = '172.20.10.2'  # Change to your IP
+IP_ADDRESS = '192.168.165.142.'  # Change to your IP
 URL = HTTP + IP_ADDRESS + ':4747/mjpegfeed?640x480'
 
-# Define colors with BGR values and HSV ranges
 colors = [
     {'name': 'red', 'bgr': (0, 0, 255), 'lower': [(0, 100, 100), (170, 100, 100)], 'upper': [(10, 255, 255), (179, 255, 255)]},
-    {'name': 'orange', 'bgr': (0, 165, 255), 'lower': [(11, 100, 100)], 'upper': [(20, 255, 255)]},
-    {'name': 'yellow', 'bgr': (0, 255, 255), 'lower': [(25, 50, 50)], 'upper': [(35, 255, 255)]},
-    {'name': 'green', 'bgr': (0, 255, 0), 'lower': [(36, 50, 50)], 'upper': [(70, 255, 255)]},
-    {'name': 'blue', 'bgr': (255, 0, 0), 'lower': [(100, 100, 100)], 'upper': [(140, 255, 255)]},
-    {'name': 'violet', 'bgr': (238, 130, 238), 'lower': [(141, 100, 100)], 'upper': [(160, 255, 255)]}
+    {'name': 'yellow', 'bgr': (0, 255, 255), 'lower': [(20, 100, 100)], 'upper': [(35, 255, 255)]},
+    {'name': 'green', 'bgr': (0, 255, 0), 'lower': [(40, 40, 40)], 'upper': [(80, 255, 255)]},
+    {'name': 'blue', 'bgr': (255, 0, 0), 'lower': [(100, 100, 100)], 'upper': [(130, 255, 255)]},
+    {'name': 'black', 'bgr': (0, 0, 0), 'lower': [(0, 0, 0)], 'upper': [(180, 255, 50)]}  # Black detection
 ]
 
-CELL_THRESHOLD = 500  # Minimum colored pixels to consider a cell filled
+CELL_THRESHOLD = 1100  # Minimum colored pixels to consider a cell filled
 
 # Fixed grid size
-GRID_ROWS = 4
+GRID_ROWS = 2
 GRID_COLS = 4
 
 def find_board_corners(frame):
@@ -78,21 +76,25 @@ def transform_board(frame, corners):
     """Apply perspective transform to get top-down view of board"""
     # Define the destination points for the transform
     # Create a square output image
-    board_size = 400  # Output size of the board
+    width = 400  # Output size of the board
+    height = 200
+    
     dst_points = np.array([
         [0, 0],
-        [board_size, 0],
-        [board_size, board_size],
-        [0, board_size]
+        [width, 0],
+        [width, height],
+        [0, height]
     ], dtype=np.float32)
     
     # Calculate perspective transform matrix
     M = cv2.getPerspectiveTransform(corners, dst_points)
     
     # Apply transform
-    warped = cv2.warpPerspective(frame, M, (board_size, board_size))
+    warped = cv2.warpPerspective(frame, M, (width, height))
     
     return warped
+
+
 
 cap = cv2.VideoCapture(URL)
 if not cap.isOpened():

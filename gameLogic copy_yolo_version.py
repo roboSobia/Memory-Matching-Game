@@ -39,7 +39,7 @@ selected_colors = ["green", "red", "yellow", "blue",
                    "yellow", "blue", "green", "red"]
 
  
-# Initialize card states: False for unvisited (not flipped), and None for unknown color
+# Initialize card states: False for unvisited (not flipped before), and None for unknown color
 card_states = {i: {"flipped": False, "color": None} for i in range(GRID_ROWS * GRID_COLS)}
 colors_found = {color: [] for color in colors.keys()}  # Initialize an empty list for each color
 
@@ -60,7 +60,7 @@ colorRanges = [
     {'name': 'blue', 'bgr': (255, 0, 0), 'lower': [(100, 100, 100)], 'upper': [(130, 255, 255)]},
     {'name': 'black', 'bgr': (0, 0, 0), 'lower': [(0, 0, 0)], 'upper': [(180, 255, 50)]}  # Black detection
 ]
-CELL_THRESHOLD = 500  # Minimum colored pixels to consider a cell filled
+CELL_THRESHOLD = 1100  # Minimum colored pixels to consider a cell filled
 
 # Fixed grid size
 GRID_ROWS = 2
@@ -430,9 +430,9 @@ def detectColor(card_id):
     cap.release()
     cv2.destroyAllWindows()
 
-# Function to choose a random card that has not been flipped
+# Function to choose a random card that has not been flipped or visited before
 def chooseRandomCard(): 
-    unvisited_cards = [card_id for card_id, state in card_states.items() if not state["flipped"]]
+    unvisited_cards = [card_id for card_id, state in card_states.items() if not state["isFlippedBefore"]]
     print(f"Unvisited cards: {unvisited_cards}")  # Debug
     return random.choice(unvisited_cards) if unvisited_cards else None
 
@@ -441,7 +441,7 @@ def showCard(card_id):
     if card_states[card_id]["color"] is None:
         # If not, detect the color and update the card's state
         print(f"Showing card {card_id} with newly detected color {selected_colors[card_id]}")  # Debug
-        # card_states[card_id] = {"flipped": True, "color": selected_colors[card_id]}
+        # card_states[card_id] = {"isFlippedBefore": True, "color": selected_colors[card_id]}
         # Wait for a mouse click to continue
         # print(card_id)
         # print("Press Enter to continue...")
@@ -457,13 +457,13 @@ def showCard(card_id):
 
         # Add the card to the colors_found dictionary
         color = detectColor(card_id)
-        card_states[card_id] = {"flipped": True, "color": color}
+        card_states[card_id] = {"isFlippedBefore": True, "color": color}
         colors_found[color].append(card_id)
         drawGrid()
     else:
         # If the color is already identified, just mark the card as flipped
         print(f"Showing card {card_id} with already identified color {card_states[card_id]['color']}")  # Debug  
-        card_states[card_id]["flipped"] = True
+        card_states[card_id]["isFlippedBefore"] = True
         # print("Press Enter to continue...")
         # print(card_id)
         # waiting_for_key = True
@@ -481,8 +481,9 @@ def showCard(card_id):
 # Function to hide card (flip it back)
 def hideCard(card_id):
     print(f"Hiding card {card_id}")  # Debug
-    # to avoid choosing same card again
-    card_states[card_id]["flipped"] = False
+    # to avoid choosing same card again 
+    # (to be more clear please don't set it back to false, it removes the whole purpose of it)
+    # card_states[card_id]["isFlippedBefore"] = False 
     # print(card_id)
     # print("Press Enter to continue...")
     # waiting_for_key = True
@@ -517,7 +518,7 @@ def drawGrid():
         for j in range(GRID_COLS):
             index = i * GRID_COLS + j
             state = card_states[index]
-            color = colors[state["color"]] if state["flipped"] else BLACK
+            color = colors[state["color"]] if state["isFlippedBefore"] else BLACK
             pygame.draw.rect(screen, color, 
                              (j * (CARD_SIZE + SPACE) + SPACE, 
                               i * (CARD_SIZE + SPACE) + SPACE, 
