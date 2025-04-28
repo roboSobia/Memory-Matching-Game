@@ -8,12 +8,13 @@ from ultralytics import YOLO
 import threading
 import os
 
-# Arm Values
-arm_values =[[110, 40, 125], [90, 65, 120], [90,110,120], [110,140,125], [150,55,155], [130,80,140], [130,105,140], [150,125,155]]
+arm_values =[[110, 40, 125], [87, 65, 120], [87,110,120], [110,140,125], [150,55,155], [130,80,140], [130,105,140], [150,125,155]]
+
 arm_home = [180, 90, 0]
-arm_temp1 = [90, 0, 120] # change later
-arm_temp2 = [90, 180, 120] # change later
+arm_temp1 = [90, 10, 120] # change later
+arm_temp2 = [90, 170, 120] # change later
 arm_trash = [140, 0, 140] # change later
+arm_trash2 = [140, 180, 140] # change later``````````
 
 # Constants
 SCREEN_WIDTH = 650
