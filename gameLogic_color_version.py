@@ -5,7 +5,6 @@ import time
 import cv2
 import numpy as np
 
-# Arm Values
 arm_values =[[110, 40, 125], [90, 65, 120], [90,110,120], [110,140,125], [150,55,155], [130,80,140], [130,105,140], [150,125,155]]
 arm_home = [180, 90, 0]
 arm_temp1 = [90, 0, 120] # change later
